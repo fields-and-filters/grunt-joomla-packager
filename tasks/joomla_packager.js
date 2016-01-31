@@ -237,6 +237,14 @@ function getMapping(extension, options)
         options.libraryname = extension.libraryname ? extension.libraryname[0] : options.name;
     }
 
+    if (extension.scriptfile)
+    {
+        thisObj.path = getFilesPath(options, true);
+        extension.scriptfile.map(processScriptfile, thisObj).forEach(function (list) {
+            [].push.apply(mapping, list);
+        });
+    }
+
     if (extension.files)
     {
         thisObj.path = getFilesPath(options, false);
@@ -464,6 +472,38 @@ function processMedia(media)
     });
 
     return mappings;
+
+    /**
+     * Get a mapping object containing a 'src' and 'dest' for a file.
+     *
+     * @param   {Object}  file  JS Object representation of a 'filename' or 'folder' element.
+     *
+     * @return  {Object}
+     */
+    function mapFile(file)
+    {
+        return {
+            src: basePath + src + '/' + file,
+            dest: dest + '/' + file
+        };
+    }
+}
+
+/**
+ * Process a 'scriptfile' element from the manifest file.
+ *
+ * @param   {Object}  scriptfile  JS Object representation of 'scriptfile' element.
+ *
+ * @return  {Array}
+ */
+function processScriptfile(scriptfile)
+{
+    /* jslint validthis: true */
+    var basePath = this.path,
+        src = '',
+        dest = '';
+
+    return [mapFile(scriptfile)];
 
     /**
      * Get a mapping object containing a 'src' and 'dest' for a file.
