@@ -247,7 +247,7 @@ function getMapping(extension, options)
 
     if (extension.languages)
     {
-        thisObj.path = getLanguagesPath(options, false);
+        thisObj.path = getLanguagesPath(options);
         extension.languages.map(processLanguages, thisObj).forEach(function (list) {
             [].push.apply(mapping, list);
         });
@@ -387,12 +387,16 @@ function processFiles(files)
  * Get the path to the language folder, either for the site or the administrator.
  *
  * @param   {Object}   options  Options object.
- * @param   {Boolean}  admin    True for the administrator language folder path.
+ * @param   {Boolean}  admin    Detect or true for the administrator language folder path.
  *
  * @return  {String}
  */
 function getLanguagesPath(options, admin)
 {
+    if (admin === true || ['plugin', 'library'].indexOf(options.type) != -1) {
+        admin = true;
+    }
+
     return (admin ? options.administrator : options.joomla) + '/language';
 }
 
