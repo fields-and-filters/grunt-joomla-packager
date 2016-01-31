@@ -9,7 +9,7 @@
 'use strict';
 
 var merge = require('merge'),
-    parseXML = require('xml2js').parseString,
+    xml2js = require('xml2js'),
     path = require('path'),
     fs = require('fs-extra');
 
@@ -35,7 +35,7 @@ module.exports = function(grunt) {
             grunt.fatal(err);
         }
 
-        parseXML(manifestXML, function (error, result) {
+        xml2js.parseString(manifestXML, function (error, result) {
             if (error)
             {
                 grunt.fatal(error);
@@ -60,15 +60,23 @@ module.exports = function(grunt) {
             // Of course, the manifest file itself.
             mapping.push({
                 src: extensionPath + '/' + manifestFile,
-                dest: '/' + manifestFile
+                dest: '/' + manifestFile,
+                content: options.config ? createXML(result, options.config) : false
             });
 
             mapping.forEach(function (file) {
-                if (grunt.file.exists(file.src))
+                var dest =  options.dest + '/' + packageName + file.dest;
+
+                if (file.content) {
+                    grunt.verbose.writeln('Write content: \n' + file.content);
+                    grunt.verbose.writeln('\tto: ' + dest);
+                    grunt.file.write(dest, file.content);
+                }
+                else if (grunt.file.exists(file.src))
                 {
                     grunt.verbose.writeln('Copying file: ' + file.src);
-                    grunt.verbose.writeln('\tto: ' + options.dest + '/' + packageName + file.dest);
-                    fs.copySync(file.src, options.dest + '/' + packageName + file.dest);
+                    grunt.verbose.writeln('\tto: ' + dest);
+                    fs.copySync(file.src, dest);
                 }
                 else
                 {
@@ -479,4 +487,23 @@ function processMedia(media)
             dest: dest + '/' + file
         };
     }
+}
+
+/**
+ * Create the new xml content with new configuration.
+ *
+ * @param   {Object}  extension JS Object representation of the manifest file's 'extension' node.
+ * @param   {Object}  config    Options object.
+ * @param   {String}  rootName  Root element name.
+ *
+ * @return  {Object}
+ */
+function createXML(xml, config, rootName) {
+    rootName = rootName || 'extension';
+
+    var builder = new xml2js.Builder({
+        rootName: rootName
+    });
+
+    return builder.buildObject(merge(xml[rootName], config));
 }
